@@ -89,7 +89,7 @@ def getPossible(m, rowID, colID):
 def getSolverState(m):
         return 81 - len(np.nonzero(m)[0])
 
-def updateSolutionSpace(m, blank, solutionSpace):
+def updateSolutionSpace(m):
     blank.clear()
     newCoords.clear()
     solutionSpace.clear()
@@ -104,14 +104,14 @@ def updateSolutionSpace(m, blank, solutionSpace):
 
 def solveByCoord(m):
     #更新空格坐标和解空间
-    updateSolutionSpace(m, blank, solutionSpace)
+    updateSolutionSpace(m)
     for coord in blank:
         if( len( solutionSpace.get( tuple(coord) ) ) == 1 ):
             m[coord[0]][coord[1]] = solutionSpace.get( tuple(coord) )[0]
     return getSolverState(m)
     
 
-def fillUnit(m, blank, solutionSpace, unitCoords):
+def fillUnit(m, unitCoords):
     valueList = []
     for coord in unitCoords:
         valueList.append(m[coord[0]][coord[1]])
@@ -128,40 +128,40 @@ def fillUnit(m, blank, solutionSpace, unitCoords):
 def solveByCompletion(m):
        
     #更新空格坐标和解空间
-    updateSolutionSpace(m, blank, solutionSpace)
+    updateSolutionSpace(m)
     #检查行完整性
     for i in range(9):
         rowCoords = []
         for j in range(9):
             rowCoords.append([i,j])
-        fillUnit(m, blank, solutionSpace, rowCoords)
+        fillUnit(m, rowCoords)
 
     #更新空格坐标和解空间
-    updateSolutionSpace(m, blank, solutionSpace)
+    updateSolutionSpace(m)
     #检查列完整性
     for i in range(9):
         colCoords = []
         for j in range(9):
             colCoords.append([j,i])
-        fillUnit(m, blank, solutionSpace, colCoords)
+        fillUnit(m, colCoords)
         
     #更新空格坐标和解空间
-    updateSolutionSpace(m, blank, solutionSpace)
+    updateSolutionSpace(m)
     #检查块完整性
     for i in range(1,7+3,3):
         for j in range(1,7+3,3):
             blockCoords = getBlockListCoords(m, i, j)
-            fillUnit(m, blank, solutionSpace, blockCoords)
+            fillUnit(m, blockCoords)
     
     #更新空格坐标和解空间
-    updateSolutionSpace(m, blank, solutionSpace)
+    updateSolutionSpace(m)
     return getSolverState(m)
 
 def solveByCompletionPath(m):
     zeroNumber = 81 - len(np.nonzero(m)[0])
     while zeroNumber > 0:
         #更新空格坐标和解空间
-        updateSolutionSpace(m, blank, solutionSpace)
+        updateSolutionSpace(m)
         
 
 m = []
@@ -221,5 +221,5 @@ while(zeroNumber > 0):
         zeroNumber = _zeroNumber
 
 viewPuzzle(m,[])
-updateSolutionSpace(m, blank, solutionSpace)
+updateSolutionSpace(m)
 viewSolutionSpace()
