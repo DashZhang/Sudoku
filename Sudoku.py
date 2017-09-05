@@ -126,7 +126,6 @@ def fillUnit(m, unitCoords):
                 m[possibleCoords[0][0]][possibleCoords[0][1]] = x
 
 def solveByCompletion(m):
-       
     #更新空格坐标和解空间
     updateSolutionSpace(m)
     #检查行完整性
@@ -135,7 +134,6 @@ def solveByCompletion(m):
         for j in range(9):
             rowCoords.append([i,j])
         fillUnit(m, rowCoords)
-
     #更新空格坐标和解空间
     updateSolutionSpace(m)
     #检查列完整性
@@ -144,7 +142,6 @@ def solveByCompletion(m):
         for j in range(9):
             colCoords.append([j,i])
         fillUnit(m, colCoords)
-        
     #更新空格坐标和解空间
     updateSolutionSpace(m)
     #检查块完整性
@@ -152,7 +149,6 @@ def solveByCompletion(m):
         for j in range(1,7+3,3):
             blockCoords = getBlockListCoords(m, i, j)
             fillUnit(m, blockCoords)
-    
     #更新空格坐标和解空间
     updateSolutionSpace(m)
     return getSolverState(m)
