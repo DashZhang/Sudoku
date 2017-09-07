@@ -19,7 +19,6 @@ def viewPuzzle(m, newCoords):
                 print('|' + str(m[i][j]) + '|', end = ''),
             else:
                 print(' ' + str(m[i][j]) + ' ', end = ''),
-                         
         print()
 
 def viewSolutionSpace():
@@ -109,7 +108,7 @@ def solveByCoord(m):
         if( len( solutionSpace.get( tuple(coord) ) ) == 1 ):
             m[coord[0]][coord[1]] = solutionSpace.get( tuple(coord) )[0]
     return getSolverState(m)
-    
+
 
 def fillUnit(m, unitCoords):
     valueList = []
@@ -158,7 +157,7 @@ def solveByCompletionPath(m):
     while zeroNumber > 0:
         #更新空格坐标和解空间
         updateSolutionSpace(m)
-        
+
 
 m = []
 for i in range(9):
@@ -215,7 +214,6 @@ while(zeroNumber > 0):
     else:
         print('按空格填了{:2}个，按完成度填了{:2}个'.format(zeroNumber-_zeroNumber, _zeroNumber - __zeroNumber))
         zeroNumber = _zeroNumber
-
 
 viewPuzzle(m,[])
 updateSolutionSpace(m)
