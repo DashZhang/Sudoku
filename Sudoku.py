@@ -216,6 +216,7 @@ while(zeroNumber > 0):
         print('按空格填了{:2}个，按完成度填了{:2}个'.format(zeroNumber-_zeroNumber, _zeroNumber - __zeroNumber))
         zeroNumber = _zeroNumber
 
+
 viewPuzzle(m,[])
 updateSolutionSpace(m)
 viewSolutionSpace()
