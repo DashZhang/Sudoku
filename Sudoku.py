@@ -6,9 +6,20 @@ Created on Sat Sep  2 15:52:54 2017
 """
 import numpy as np
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
 good = list( range(1,10) )
 blank = []
 newCoords = []
+
 solutionSpace = {():[]}
 
 def viewPuzzle(m, newCoords):
@@ -16,9 +27,9 @@ def viewPuzzle(m, newCoords):
     for i in range(9):
         for j in range(9):
             if [i,j] in newCoords:
-                print('|' + str(m[i][j]) + '|', end = ''),
+                print(' ' + bcolors.WARNING + str(m[i][j]) + bcolors.ENDC, end = ' '),
             else:
-                print(' ' + str(m[i][j]) + ' ', end = ''),
+                print(' ' + str(m[i][j]), end = ' '),
         print()
 
 def viewSolutionSpace():
@@ -90,7 +101,6 @@ def getSolverState(m):
 
 def updateSolutionSpace(m):
     blank.clear()
-    newCoords.clear()
     solutionSpace.clear()
     #更新空格列表
     for i in range(9):
@@ -107,6 +117,7 @@ def solveByCoord(m):
     for coord in blank:
         if( len( solutionSpace.get( tuple(coord) ) ) == 1 ):
             m[coord[0]][coord[1]] = solutionSpace.get( tuple(coord) )[0]
+            newCoords.append(coord)
     return getSolverState(m)
 
 
@@ -123,6 +134,7 @@ def fillUnit(m, unitCoords):
                     possibleCoords.append(coord)
             if len( possibleCoords ) == 1:
                 m[possibleCoords[0][0]][possibleCoords[0][1]] = x
+                newCoords.append(possibleCoords[0])
 
 def solveByCompletion(m):
     #更新空格坐标和解空间
@@ -205,16 +217,17 @@ viewPuzzle(m,[])
 zeroNumber = 81 - len(np.nonzero(m)[0])
 
 while(zeroNumber > 0):
+    newCoords = []
     _zeroNumber = solveByCoord(m)
     __zeroNumber = solveByCompletion(m)
+    if len(newCoords) > 0:
+        viewPuzzle(m, newCoords)
     if __zeroNumber == zeroNumber:
         zeroNumber = __zeroNumber
         print('还剩{:2}个数字没有填'.format(zeroNumber))
         break
     else:
-        print('按空格填了{:2}个，按完成度填了{:2}个'.format(zeroNumber-_zeroNumber, _zeroNumber - __zeroNumber))
+        print('按空格填了{:2}个，按完成度填了{:2}个，還剩下{:2}個'.format(zeroNumber-_zeroNumber, _zeroNumber - __zeroNumber, zeroNumber))
         zeroNumber = _zeroNumber
-
-viewPuzzle(m,[])
-updateSolutionSpace(m)
-viewSolutionSpace()
+# updateSolutionSpace(m)
+# viewSolutionSpace()
