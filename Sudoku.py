@@ -16,20 +16,35 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-good = list( range(1,10) )
+GOOD = list( range(1,10) )
 blank = []
-newCoords = []
-
-solutionSpace = {():[]}
+newCoords = {}
+solutionSpace = {}
 
 def viewPuzzle(m, newCoords):
-    print('现在的样子：')
     for i in range(9):
         for j in range(9):
-            if [i,j] in newCoords:
-                print(' ' + bcolors.WARNING + str(m[i][j]) + bcolors.ENDC, end = ' '),
+            keys = list(newCoords.keys())
+            if len(keys) != 0:
+                if [i,j] in newCoords[keys[0]]:
+                    print(' ' + bcolors.UNDERLINE + bcolors.BOLD + bcolors.OKGREEN + str(m[i][j]) + bcolors.ENDC, end = ' '),
+                elif [i,j] in newCoords[keys[1]]:
+                    print(' ' + bcolors.UNDERLINE + bcolors.BOLD + bcolors.OKBLUE + str(m[i][j]) + bcolors.ENDC, end=' '),
+                else:
+                    print(' ' + str(m[i][j]), end=' '),
             else:
                 print(' ' + str(m[i][j]), end = ' '),
+        print()
+
+def viewBlank(m):
+    updateSolutionSpace(m)
+    for i in range(9):
+        for j in range(9):
+            if m[i][j] == 0:
+                possibleCount = len( solutionSpace[tuple([i,j])] )
+                print(' ' + bcolors.UNDERLINE + bcolors.BOLD + bcolors.FAIL + str(possibleCount) + bcolors.ENDC, end = ' '),
+            else:
+                print(' ' + str(m[i][j]), end=' '),
         print()
 
 def viewSolutionSpace():
@@ -64,22 +79,22 @@ def getRow(m, rowID):
 def checkCol(m,colID):
     col = getCol(m, colID)
     col.sort
-    return col == good
+    return col == GOOD
 
 def checkRow(m,rowID):
     row = getRow(m, rowID)
     row.sort
-    return row == good
+    return row == GOOD
 
 def checkBlock(m, rowID, colID):
     blockList = getBlockList(m, rowID, colID)
-    return blockList == good
+    return blockList == GOOD
 
 def isPossible(m,rowID, colID, x):
     blockList = getBlockList(m, rowID, colID)
     row = getRow(m, rowID)
     col = getCol(m, colID)
-    if (x in blockList or x in row or x in col or x not in good):
+    if (x in blockList or x in row or x in col or x not in GOOD):
         return False
     else:
         return True
@@ -87,7 +102,7 @@ def isPossible(m,rowID, colID, x):
 def getPossible(m, rowID, colID):
     possibleX = []
     if m[rowID][colID] == 0:
-        for x in good:
+        for x in GOOD:
             if(isPossible(m,rowID, colID, x)):
                 possibleX.append(x)
         if len( possibleX ) == 0:
@@ -112,12 +127,13 @@ def updateSolutionSpace(m):
         solutionSpace[tuple(coord)] = getPossible(m,coord[0],coord[1])
 
 def solveByCoord(m):
+    newCoords['byCoords'] = []
     #更新空格坐标和解空间
     updateSolutionSpace(m)
     for coord in blank:
         if( len( solutionSpace.get( tuple(coord) ) ) == 1 ):
             m[coord[0]][coord[1]] = solutionSpace.get( tuple(coord) )[0]
-            newCoords.append(coord)
+            newCoords['byCoords'].append(coord)
     return getSolverState(m)
 
 
@@ -126,7 +142,7 @@ def fillUnit(m, unitCoords):
     for coord in unitCoords:
         valueList.append(m[coord[0]][coord[1]])
     if len( np.nonzero(valueList)[0] ) != 9:
-        residual = list( set(good+[0,]) - set(valueList)  )
+        residual = list( set(GOOD+[0,]) - set(valueList)  )
         for x in residual:
             possibleCoords = []
             for coord in unitCoords:
@@ -134,9 +150,10 @@ def fillUnit(m, unitCoords):
                     possibleCoords.append(coord)
             if len( possibleCoords ) == 1:
                 m[possibleCoords[0][0]][possibleCoords[0][1]] = x
-                newCoords.append(possibleCoords[0])
+                newCoords['byCompletion'].append(possibleCoords[0])
 
 def solveByCompletion(m):
+    newCoords['byCompletion'] = []
     #更新空格坐标和解空间
     updateSolutionSpace(m)
     #检查行完整性
@@ -212,22 +229,26 @@ m3 = [[0,9,8,0,0,3,0,0,0],
 
 m = m3
 
-viewPuzzle(m,[])
+viewPuzzle(m,{})
+print('###########################')
 
 zeroNumber = 81 - len(np.nonzero(m)[0])
 
 while(zeroNumber > 0):
-    newCoords = []
-    _zeroNumber = solveByCoord(m)
-    __zeroNumber = solveByCompletion(m)
-    if len(newCoords) > 0:
-        viewPuzzle(m, newCoords)
-    if __zeroNumber == zeroNumber:
-        zeroNumber = __zeroNumber
-        print('还剩{:2}个数字没有填'.format(zeroNumber))
+    zeros = [0,0]
+    zeros[0] = solveByCoord(m)
+    zeros[1] = solveByCompletion(m)
+    if zeros[-1] == zeroNumber:  #沒法填了
+        if zeroNumber == 0:
+            print('填完了,Yeah!')
+        else:
+            print('还剩{:2}个数字没有填'.format(zeroNumber))
+        viewBlank(m)
         break
     else:
-        print('按空格填了{:2}个，按完成度填了{:2}个，還剩下{:2}個'.format(zeroNumber-_zeroNumber, _zeroNumber - __zeroNumber, zeroNumber))
-        zeroNumber = _zeroNumber
+        viewPuzzle(m,newCoords)
+        print('按空格填了{:2}个，按完成度填了{:2}个，還剩下{:2}個'.format( len(newCoords['byCoords']), len(newCoords['byCompletion']), zeros[-1] ) )
+    zeroNumber = zeros[-1]
+
 # updateSolutionSpace(m)
 # viewSolutionSpace()
