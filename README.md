@@ -1,2 +1,2 @@
 # Sudoku
-solver
+solver for evil SUDOKU:smiling_imp:
