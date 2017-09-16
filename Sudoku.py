@@ -200,12 +200,6 @@ def solveByCompletion(m):
     solutionSpace = updateSolutionSpace(m)
     return (m, newCoordinates)
 
-m = []
-for i in range(9):
-    m.append([])
-    for j in range(9):
-         m[i].append(0)
-
 m1 = [[0,3,5,0,0,0,0,1,0],
       [9,0,0,0,0,0,0,0,0],
       [0,2,6,0,3,0,9,8,7],
@@ -239,6 +233,18 @@ m3 = [[0,9,8,0,0,3,0,0,0],
      [0,0,0,5,0,0,1,7,0]
         ]
 
+m_Evil =[
+    [0,0,0,0,0,9,1,0,0],
+    [1,0,5,0,0,6,0,3,0],
+    [8,0,0,5,0,0,0,0,4],
+    [4,0,0,0,2,0,0,0,5],
+    [0,0,9,0,0,0,7,0,0],
+    [3,0,0,0,8,0,0,0,9],
+    [9,0,0,0,0,8,0,0,2],
+    [0,3,0,7,0,0,4,0,6],
+    [0,0,8,4,0,0,0,0,0]
+]
+
 def fill(m):
     zeroNumber = getZeroNumber(m)
     while (zeroNumber > 0):
@@ -265,9 +271,9 @@ import copy
 def guess(m):
     solutionSpace = updateSolutionSpace(m)
     minSolutionKey = getMinSolutionKey(solutionSpace)
-    _m = copy.deepcopy(m)
+    m_copy = copy.deepcopy(m)
     for guessValue in solutionSpace[minSolutionKey]:
-        m = copy.deepcopy(_m)
+        m = copy.deepcopy(m_copy)
         print('猜測在({:2},{:2})，應該填寫{:2}'.format(minSolutionKey[0],minSolutionKey[1],guessValue))
         m[minSolutionKey[0]][minSolutionKey[1]] = guessValue
         viewPuzzle(m, {}, [list(minSolutionKey)])
@@ -294,7 +300,7 @@ def getMinSolutionKey(solutionSpace):
     return minSolutionKey
 
 def main():
-    m = m3
+    m = m_Evil
     viewPuzzle(m, {},[])
     zeroNumber = 81 - len(np.nonzero(m)[0])
     if zeroNumber > 0:
