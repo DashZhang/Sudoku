@@ -17,27 +17,29 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 GOOD = list( range(1,10) )
-blank = []
-newCoords = {}
-solutionSpace = {}
 
-def viewPuzzle(m, newCoords):
+import itertools
+def viewPuzzle(m, newCoordinates, guessCoords):
+    keys = list(newCoordinates.keys())
     for i in range(9):
         for j in range(9):
-            keys = list(newCoords.keys())
-            if len(keys) != 0:
-                if [i,j] in newCoords[keys[0]]:
+            if [i, j] in list(itertools.chain.from_iterable(newCoordinates.values())):
+                if [i,j] in newCoordinates[keys[0]]:
                     print(' ' + bcolors.UNDERLINE + bcolors.BOLD + bcolors.OKGREEN + str(m[i][j]) + bcolors.ENDC, end = ' '),
-                elif [i,j] in newCoords[keys[1]]:
+                elif [i,j] in newCoordinates[keys[1]]:
                     print(' ' + bcolors.UNDERLINE + bcolors.BOLD + bcolors.OKBLUE + str(m[i][j]) + bcolors.ENDC, end=' '),
                 else:
-                    print(' ' + str(m[i][j]), end=' '),
+                    print(' X', end=' '),
+            elif [i, j] in guessCoords:
+                print(' ' + bcolors.UNDERLINE + bcolors.BOLD + bcolors.WARNING + str(m[i][j]) + bcolors.ENDC, end=' '),
+            elif m[i][j] == 0:
+                print(' _', end=' '),
             else:
                 print(' ' + str(m[i][j]), end = ' '),
         print()
 
 def viewBlank(m):
-    updateSolutionSpace(m)
+    solutionSpace = updateSolutionSpace(m)
     for i in range(9):
         for j in range(9):
             if m[i][j] == 0:
@@ -48,6 +50,7 @@ def viewBlank(m):
         print()
 
 def viewSolutionSpace():
+    solutionSpace = updateSolutionSpace(m)
     for key in solutionSpace.keys():
                 print( str(key) + ':' + str(solutionSpace[key]))
 
@@ -78,12 +81,12 @@ def getRow(m, rowID):
 
 def checkCol(m,colID):
     col = getCol(m, colID)
-    col.sort
+    col.sort()
     return col == GOOD
 
 def checkRow(m,rowID):
     row = getRow(m, rowID)
-    row.sort
+    row.sort()
     return row == GOOD
 
 def checkBlock(m, rowID, colID):
@@ -111,34 +114,46 @@ def getPossible(m, rowID, colID):
         raise Exception('已经填了，坐标({:2},{:2})'.format(rowID, colID))
     return possibleX
 
-def getSolverState(m):
+def getZeroNumber(m):
         return 81 - len(np.nonzero(m)[0])
 
-def updateSolutionSpace(m):
+def getBlankCoord(m):
+    blank = []
     blank.clear()
-    solutionSpace.clear()
-    #更新空格列表
     for i in range(9):
         for j in range(9):
             if(m[i][j]==0):
                 blank.append([i,j])
+    return blank
+
+def updateSolutionSpace(m):
+    solutionSpace = {}
+    solutionSpace.clear()
+    #更新空格列表
+    blank = getBlankCoord(m)
     #更新解空间
     for coord in blank:
         solutionSpace[tuple(coord)] = getPossible(m,coord[0],coord[1])
+    return solutionSpace
 
 def solveByCoord(m):
-    newCoords['byCoords'] = []
+    newCoordinates = []
+    # 更新空格列表
+    blank = getBlankCoord(m)
     #更新空格坐标和解空间
-    updateSolutionSpace(m)
+    solutionSpace = updateSolutionSpace(m)
     for coord in blank:
         if( len( solutionSpace.get( tuple(coord) ) ) == 1 ):
             m[coord[0]][coord[1]] = solutionSpace.get( tuple(coord) )[0]
-            newCoords['byCoords'].append(coord)
-    return getSolverState(m)
+            newCoordinates.append(coord)
+    return (m,newCoordinates)
 
 
 def fillUnit(m, unitCoords):
     valueList = []
+    newCoordinates = []
+    blank = getBlankCoord(m)
+    solutionSpace = updateSolutionSpace(m)
     for coord in unitCoords:
         valueList.append(m[coord[0]][coord[1]])
     if len( np.nonzero(valueList)[0] ) != 9:
@@ -150,43 +165,40 @@ def fillUnit(m, unitCoords):
                     possibleCoords.append(coord)
             if len( possibleCoords ) == 1:
                 m[possibleCoords[0][0]][possibleCoords[0][1]] = x
-                newCoords['byCompletion'].append(possibleCoords[0])
+                newCoordinates.append(possibleCoords[0])
+    return (m, newCoordinates)
 
 def solveByCompletion(m):
-    newCoords['byCompletion'] = []
+    newCoordinates = []
     #更新空格坐标和解空间
-    updateSolutionSpace(m)
+    solutionSpace = updateSolutionSpace(m)
     #检查行完整性
     for i in range(9):
         rowCoords = []
         for j in range(9):
             rowCoords.append([i,j])
-        fillUnit(m, rowCoords)
+        (m, _newCoords) = fillUnit(m, rowCoords)
+        newCoordinates = newCoordinates + _newCoords
     #更新空格坐标和解空间
-    updateSolutionSpace(m)
+    solutionSpace = updateSolutionSpace(m)
     #检查列完整性
     for i in range(9):
         colCoords = []
         for j in range(9):
             colCoords.append([j,i])
-        fillUnit(m, colCoords)
+        (m,_newCoords) = fillUnit(m, colCoords)
+        newCoordinates = newCoordinates + _newCoords
     #更新空格坐标和解空间
-    updateSolutionSpace(m)
+    solutionSpace = updateSolutionSpace(m)
     #检查块完整性
     for i in range(1,7+3,3):
         for j in range(1,7+3,3):
             blockCoords = getBlockListCoords(m, i, j)
-            fillUnit(m, blockCoords)
+            (m, _newCoords) = fillUnit(m, blockCoords)
+            newCoordinates = newCoordinates + _newCoords
     #更新空格坐标和解空间
-    updateSolutionSpace(m)
-    return getSolverState(m)
-
-def solveByCompletionPath(m):
-    zeroNumber = 81 - len(np.nonzero(m)[0])
-    while zeroNumber > 0:
-        #更新空格坐标和解空间
-        updateSolutionSpace(m)
-
+    solutionSpace = updateSolutionSpace(m)
+    return (m, newCoordinates)
 
 m = []
 for i in range(9):
@@ -227,28 +239,69 @@ m3 = [[0,9,8,0,0,3,0,0,0],
      [0,0,0,5,0,0,1,7,0]
         ]
 
-m = m3
-
-viewPuzzle(m,{})
-print('###########################')
-
-zeroNumber = 81 - len(np.nonzero(m)[0])
-
-while(zeroNumber > 0):
-    zeros = [0,0]
-    zeros[0] = solveByCoord(m)
-    zeros[1] = solveByCompletion(m)
-    if zeros[-1] == zeroNumber:  #沒法填了
-        if zeroNumber == 0:
-            print('填完了,Yeah!')
+def fill(m):
+    zeroNumber = getZeroNumber(m)
+    while (zeroNumber > 0):
+        newCoordinates = {}
+        zeros = [0, 0]
+        (m,newCoordinates['byCoords']) = solveByCoord(m)
+        zeros[0] = getZeroNumber(m)
+        (m, newCoordinates['byCompletion']) = solveByCompletion(m)
+        zeros[1] = getZeroNumber(m)
+        if zeros[-1] == zeroNumber:  # 沒法填了
+            if zeroNumber == 0:
+                print('填完了,Yeah!')
+            else:
+                print('还剩{:2}个数字没有填'.format(zeroNumber))
+            viewBlank(m)
+            break
         else:
-            print('还剩{:2}个数字没有填'.format(zeroNumber))
-        viewBlank(m)
-        break
-    else:
-        viewPuzzle(m,newCoords)
-        print('按空格填了{:2}个，按完成度填了{:2}个，還剩下{:2}個'.format( len(newCoords['byCoords']), len(newCoords['byCompletion']), zeros[-1] ) )
-    zeroNumber = zeros[-1]
+            print('按空格填了{:2}个，按完成度填了{:2}个，還剩下{:2}個'.format(len(newCoordinates['byCoords']), len(newCoordinates['byCompletion']), zeros[-1]))
+            viewPuzzle(m, newCoordinates, [])
+        zeroNumber = zeros[-1]
+    return (m, zeroNumber)
 
-# updateSolutionSpace(m)
-# viewSolutionSpace()
+import copy
+def guess(m):
+    solutionSpace = updateSolutionSpace(m)
+    minSolutionKey = getMinSolutionKey(solutionSpace)
+    _m = copy.deepcopy(m)
+    for guessValue in solutionSpace[minSolutionKey]:
+        m = copy.deepcopy(_m)
+        print('猜測在({:2},{:2})，應該填寫{:2}'.format(minSolutionKey[0],minSolutionKey[1],guessValue))
+        m[minSolutionKey[0]][minSolutionKey[1]] = guessValue
+        viewPuzzle(m, {}, [list(minSolutionKey)])
+        try:
+            (m, zeroNumber) = fill(m)
+            if zeroNumber == 0:
+                print('通過猜測填完了')
+                break
+            else:
+                print('再猜一次')
+                m = guess(m)
+        except Exception as e:
+            print(e)
+            print('猜錯了')
+    return m
+
+def getMinSolutionKey(solutionSpace):
+    minSolutionKey = list(solutionSpace.keys())[0]
+    minSolutionLength = len(solutionSpace[minSolutionKey])
+    for solutionKey in solutionSpace.keys():
+        if len(solutionSpace[solutionKey]) < minSolutionLength:
+            minSolutionKey = solutionKey
+            minSolutionLength = len(solutionSpace[solutionKey])
+    return minSolutionKey
+
+def main():
+    m = m3
+    viewPuzzle(m, {},[])
+    zeroNumber = 81 - len(np.nonzero(m)[0])
+    if zeroNumber > 0:
+        (m, zeroNumber) = fill(m)
+        m = guess(m)
+    # updateSolutionSpace(m)
+    # viewSolutionSpace()
+
+if __name__ == "__main__":
+    main()
